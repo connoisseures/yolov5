@@ -170,7 +170,7 @@ class Model(nn.Module):
         return self
 
     def convert_ycbcr_to_rgb_in_1st_conv(self):
-        print('[surgery] convert 1st conv: converting ycbcr to rgb ... ')
+        print('[surgery] 1st conv: add weight of converting ycbcr to rgb ... ')
         m = self.model[0]
         weight = m.conv.conv.weight 
         weight[:,0:3,:,:] = self.convert_ycbcr_to_rgb(weight[:,0:3,:,:])
@@ -179,7 +179,7 @@ class Model(nn.Module):
         weight[:,9:12,:,:] = self.convert_ycbcr_to_rgb(weight[:,9:12,:,:])
 
     def convert_ycbcr_to_rgb(self, w):
-        print("Parsing the first conv layer weights of shape {}...".format(w.size()))
+        print("[ycbcr to rgb] weights of shape, ".format(w.size()))
 
         w = w.permute((0,2,3,1))
         originSize = w.size()
