@@ -161,12 +161,33 @@ class Model(nn.Module):
         print('Fusing layers... ')
         for m in self.model.modules():
             if type(m) is Conv:
+                print(m)
                 m._non_persistent_buffers_set = set()  # pytorch 1.6.0 compatability
                 m.conv = fuse_conv_and_bn(m.conv, m.bn)  # update conv
                 delattr(m, 'bn')  # remove batchnorm
                 m.forward = m.fuseforward  # update forward
         self.info()
         return self
+
+    def convert_ycbcr_to_rgb_in_1st_conv(self):
+        print('[surgery] convert 1st conv: converting ycbcr to rgb ... ')
+        m = self.model[0]
+        weight = m.conv.conv.weight 
+        weight[:,0:3,:,:] = self.convert_ycbcr_to_rgb(weight[:,0:3,:,:])
+        weight[:,3:6,:,:] = self.convert_ycbcr_to_rgb(weight[:,3:6,:,:])
+        weight[:,6:9,:,:] = self.convert_ycbcr_to_rgb(weight[:,6:9,:,:])
+        weight[:,9:12,:,:] = self.convert_ycbcr_to_rgb(weight[:,9:12,:,:])
+
+    def convert_ycbcr_to_rgb(self, w):
+        print("Parsing the first conv layer weights of shape {}...".format(w.size()))
+
+        w = w.permute((0,2,3,1))
+        originSize = w.size()
+        w = w.reshape(-1, 3)
+        T_ycbcr2rgb = torch.tensor(np.array([[1, 0, 1.403],[1, -0.344, -0.714], [1, 1.773, 0]], dtype=np.float32))
+        w = torch.mm(w, T_ycbcr2rgb)
+        w = w.reshape(originSize).permute((0,3,1,2))
+        return w
 
     def info(self, verbose=False):  # print model information
         model_info(self, verbose)
