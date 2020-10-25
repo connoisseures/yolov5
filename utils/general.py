@@ -84,14 +84,22 @@ def check_anchors(dataset, model, thr=4.0, imgsz=640):
     # Check anchor fit to data, recompute if necessary
     print('\nAnalyzing anchors... ', end='')
     m = model.module.model[-1] if hasattr(model, 'module') else model.model[-1]  # Detect()
-    shapes = imgsz * dataset.shapes / dataset.shapes.max(1, keepdims=True)
+    # dataset.shapes: [image size]; image size:(width, height)
+    # shapes.shape = (# of images, 2) 
+    shapes = imgsz * dataset.shapes / dataset.shapes.max(1, keepdims=True) # resize image to image size for training  
     scale = np.random.uniform(0.9, 1.1, size=(shapes.shape[0], 1))  # augment scale
-    wh = torch.tensor(np.concatenate([l[:, 3:5] * s for s, l in zip(shapes * scale, dataset.labels)])).float()  # wh
+    wh = torch.tensor(np.concatenate([l[:, 3:5] * s for s, l in zip(shapes * scale, dataset.labels)])).float()  # wh; wh.shape = (# of labels, 2)
 
     def metric(k):  # compute metric
-        r = wh[:, None] / k[None]
+        # wh[:, None].shape = (# of labels, 1, 2) 
+        # k[None].shape = (1, # of anchors, 2), ex: (1,9,2)
+        # r.shape =  (# of labels, # of anchors, 2)
+        r = wh[:, None] / k[None] # ratio: ratio of object size over anchor size
+        # x.shape =  (# of labels, # of anchors)
         x = torch.min(r, 1. / r).min(2)[0]  # ratio metric
-        best = x.max(1)[0]  # best_x
+        # best.shape =  (# of labels)
+        best = x.max(1)[0]  # best_x: max ratio of each label
+        # mean of # of anchors above threshold among all labels: sum of valid anchors in a label / # of labels 
         aat = (x > 1. / thr).float().sum(1).mean()  # anchors above threshold
         bpr = (best > 1. / thr).float().mean()  # best possible recall
         return bpr, aat
@@ -799,7 +807,8 @@ def kmean_anchors(path='./data/coco128.yaml', n=9, img_size=640, thr=4.0, gen=10
 
     # Get label wh
     shapes = img_size * dataset.shapes / dataset.shapes.max(1, keepdims=True)
-    wh0 = np.concatenate([l[:, 3:5] * s for s, l in zip(shapes, dataset.labels)])  # wh
+    wh0 = np.concatenate([l[:, 3:5] * s for s, l in zip(shapes, dataset.labels)])  # wh; wh.shape = (# of labels, 2)
+
 
     # Filter
     i = (wh0 < 3.0).any(1).sum()
@@ -831,6 +840,7 @@ def kmean_anchors(path='./data/coco128.yaml', n=9, img_size=640, thr=4.0, gen=10
     # fig.savefig('wh.png', dpi=200)
 
     # Evolve
+    # fine tune anchors to have better best average ratio of wh over anchor size
     npr = np.random
     f, sh, mp, s = fitness(k), k.shape, 0.9, 0.1  # fitness, generations, mutation prob, sigma
     pbar = tqdm(range(gen), desc='Evolving anchors with Genetic Algorithm')  # progress bar
