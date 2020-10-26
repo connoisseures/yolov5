@@ -2,7 +2,11 @@
 The anchor boxes is searched by kmeans. The number of cluster is defined as number of anchors. 
 
 - How to evaluate if a anchor is good enough?
-    - the relative size of label over the size of the anchor is larger than the threshold.
+    - the relative size of label over anchor is larger than the threshold.
+        - w(label)  / w(anchor) 
+        - w(anchor) / w(label)
+        - h(label)  / h(anchor) 
+        - h(anchor) / h(label)
 
 - steps of determining anchors 
     1. check if the predefined anchors meet the recall criterion
@@ -19,4 +23,5 @@ The anchor boxes is searched by kmeans. The number of cluster is defined as numb
         - for each label, find the maximal relative ratio among its anchors
         - the recall = the number of labels which best relative ratio is larger than (1/threshold) / total of lablels
     - anchors above threshold: average # of anchors which is above threshold for a label
+
 
