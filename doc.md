@@ -17,11 +17,11 @@ The anchor boxes is searched by kmeans. The number of cluster is defined as numb
     3. fine tune the searched anchors to have a better best possible recall 
         - genetic algorithm
 
-- Metrix
+- Metric
     - Recall of best anchor ratio
         - for each label, find its relative ratio of label's width and height over each anchor's width and height respectively
         - for each label, find the maximal relative ratio among its anchors
         - the recall = the number of labels which best relative ratio is larger than (1/threshold) / total of lablels
-    - anchors above threshold: average # of anchors among labels which are above threshold
+    - anchors above threshold: average # of anchors of a label which are above threshold
 
 
