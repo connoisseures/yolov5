@@ -41,6 +41,8 @@ dataloader is used to grep data and to preprocess data for training and testing 
 3. data process 
     - options
         - rectangular training
+            - https://github.com/ultralytics/yolov3/issues/358
+            - https://github.com/ultralytics/yolov3/issues/232
         - data augmentation
         - mosaic
             ```python
